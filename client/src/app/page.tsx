@@ -879,9 +879,8 @@ function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className={`card p-8 jewel-card relative ${plan.highlighted ? 'ring-2' : ''}`}
+              className={`card p-8 jewel-card relative ${plan.highlighted ? 'ring-2 ring-[#FD297B]' : ''}`}
               style={plan.highlighted ? { 
-                ringColor: '#FD297B',
                 boxShadow: '0 0 40px rgba(253, 41, 123, 0.2)'
               } : {}}
             >
