@@ -68,10 +68,15 @@ export default function LetterPage() {
       ]);
       setLetter(letterRes.data.letter);
 
-      // Load votes if consensus type
-      if (letterRes.data.letter.unlock_type === 'consensus' && !letterRes.data.letter.is_unlocked) {
-        const voteRes = await votes.get(vaultId, letterId);
-        setVoteData(voteRes.data);
+      // Load votes for locked letters so members can start voting optionally
+      if (!letterRes.data.letter.is_unlocked) {
+        try {
+          const voteRes = await votes.get(vaultId, letterId);
+          setVoteData(voteRes.data);
+        } catch (err) {
+          // Ignore errors (e.g., user not a member yet) — vote UI will stay hidden
+          setVoteData(null);
+        }
       }
 
       // Show unseal animation for unlocked letters on first view
@@ -464,16 +469,20 @@ function SealedLetterView({
             </div>
           )}
 
-          {/* Consensus voting */}
-          {letter.unlock_type === 'consensus' && voteData && (
+          {/* Voting (optional for locked letters) */}
+          {voteData && !letter.is_unlocked && (
             <div className="space-y-6">
               {/* Progress bar */}
               <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(voteData.summary.yes / voteData.summary.required) * 100}%` }}
+                  animate={{ width: `${(voteData.summary.required ? (voteData.summary.yes / voteData.summary.required) : 0) * 100}%` }}
                   className="h-full bg-gradient-to-r from-primary-500 to-emerald-500"
                 />
+              </div>
+
+              <div className="text-sm text-white/60">
+                {voteData.summary.yes} yes · {voteData.summary.no} no · {voteData.summary.total} votes · majority required: {Math.floor(voteData.summary.required / 2) + 1}
               </div>
 
               {/* Vote buttons */}
@@ -483,7 +492,7 @@ function SealedLetterView({
                   className="btn-primary flex-1 max-w-[150px]"
                 >
                   <ThumbsUp className="w-5 h-5 mr-2" />
-                  Unseal
+                  Vote to Unseal
                 </button>
                 <button
                   onClick={() => onVote('no')}
