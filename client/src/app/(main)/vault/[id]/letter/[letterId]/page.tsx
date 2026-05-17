@@ -44,6 +44,7 @@ export default function LetterPage() {
   const [hasAnimated, setHasAnimated] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [needsJoin, setNeedsJoin] = useState(false);
 
   const controls = useAnimation();
 
@@ -73,9 +74,11 @@ export default function LetterPage() {
         try {
           const voteRes = await votes.get(vaultId, letterId);
           setVoteData(voteRes.data);
-        } catch (err) {
-          // Ignore errors (e.g., user not a member yet) — vote UI will stay hidden
+          setNeedsJoin(false);
+        } catch (err: any) {
+          // If user isn't a member, the API will return 403. Show a join prompt.
           setVoteData(null);
+          setNeedsJoin(true);
         }
       }
 
