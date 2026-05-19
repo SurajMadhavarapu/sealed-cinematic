@@ -149,6 +149,13 @@ exports.generateInvite = async (req, res, next) => {
       });
     }
 
+    if (memberCheck.rows[0].role !== 'owner') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only vault owners can generate invite codes',
+      });
+    }
+
     const inviteCode = generateInviteCode();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 

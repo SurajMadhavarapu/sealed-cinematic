@@ -1,11 +1,12 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const { logAuthAttempt } = require('../utils/securityLogger');
 
 // Generate JWT token
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    expiresIn: process.env.JWT_EXPIRES_IN || '12h',
   });
 };
 
@@ -17,6 +18,7 @@ exports.register = async (req, res, next) => {
 
     // Validation
     if (!email || !password || !name) {
+      logAuthAttempt('register_validation_failed', req);
       return res.status(400).json({ 
         success: false, 
         message: 'Please provide email, password, and name' 
@@ -30,6 +32,7 @@ exports.register = async (req, res, next) => {
     );
 
     if (existingUser.rows.length > 0) {
+      logAuthAttempt('register_duplicate_email', req, { email: email.toLowerCase() });
       return res.status(400).json({ 
         success: false, 
         message: 'Email already registered' 
@@ -63,6 +66,7 @@ exports.register = async (req, res, next) => {
         token,
       },
     });
+    logAuthAttempt('register_success', req, { userId: user.id, email: user.email });
   } catch (error) {
     next(error);
   }
@@ -76,6 +80,7 @@ exports.login = async (req, res, next) => {
 
     // Validation
     if (!email || !password) {
+      logAuthAttempt('login_validation_failed', req);
       return res.status(400).json({ 
         success: false, 
         message: 'Please provide email and password' 
@@ -89,6 +94,7 @@ exports.login = async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
+      logAuthAttempt('login_failed_user_not_found', req, { email: email.toLowerCase() });
       return res.status(401).json({ 
         success: false, 
         message: 'Invalid credentials' 
@@ -100,6 +106,7 @@ exports.login = async (req, res, next) => {
     // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      logAuthAttempt('login_failed_invalid_password', req, { userId: user.id });
       return res.status(401).json({ 
         success: false, 
         message: 'Invalid credentials' 
@@ -120,6 +127,7 @@ exports.login = async (req, res, next) => {
         token,
       },
     });
+    logAuthAttempt('login_success', req, { userId: user.id });
   } catch (error) {
     next(error);
   }

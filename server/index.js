@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const validateEnv = require('./config/validateEnv');
 
 // Import scheduler
 const { startScheduler } = require('./services/schedulerService');
@@ -15,8 +16,21 @@ const aiRoutes = require('./routes/aiRoutes');
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
+const {
+  securityHeaders,
+  enforceHttps,
+  requestLogger,
+  apiLimiter,
+} = require('./middleware/security');
 
 const app = express();
+app.set('trust proxy', 1);
+validateEnv();
+
+// Security middleware
+app.use(securityHeaders);
+app.use(enforceHttps);
+app.use(requestLogger);
 
 // Body parser
 app.use(express.json());
@@ -26,6 +40,9 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
+
+// Global API abuse protection
+app.use('/api', apiLimiter);
 
 // API Routes
 app.use('/api/auth', authRoutes);

@@ -1,7 +1,7 @@
+const { logApiError } = require('../utils/securityLogger');
+
 // Global error handler
 const errorHandler = (err, req, res, next) => {
-  console.error('Error:', err);
-
   // Default error
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal server error';
@@ -35,6 +35,8 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 401;
     message = 'Token expired - please login again';
   }
+
+  logApiError(err, req, statusCode);
 
   res.status(statusCode).json({
     success: false,

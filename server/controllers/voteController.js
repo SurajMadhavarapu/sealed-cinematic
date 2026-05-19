@@ -89,8 +89,8 @@ exports.castVote = async (req, res, next) => {
       await pool.query(
         `UPDATE letters 
          SET is_unlocked = TRUE, unlocked_at = NOW()
-         WHERE id = $1`,
-        [letterId]
+         WHERE id = $1 AND vault_id = $2`,
+        [letterId, vaultId]
       );
       unlocked = true;
     }
@@ -132,14 +132,35 @@ exports.getVotes = async (req, res, next) => {
       });
     }
 
+    // Ensure the requested letter belongs to this vault
+    const letterResult = await pool.query(
+      'SELECT id, unlock_type FROM letters WHERE id = $1 AND vault_id = $2',
+      [letterId, vaultId]
+    );
+
+    if (letterResult.rows.length === 0) {
+      return res.status(404).json({
+       success: false,
+       message: 'Letter not found',
+      });
+    }
+
+    if (letterResult.rows[0].unlock_type !== 'consensus') {
+      return res.status(400).json({
+       success: false,
+       message: 'Votes are only available for consensus letters',
+      });
+    }
+
     // Get votes with user info
     const result = await pool.query(
       `SELECT v.vote, v.created_at, u.id as user_id, u.name
        FROM votes v
        JOIN users u ON v.user_id = u.id
-       WHERE v.letter_id = $1
+       JOIN letters l ON l.id = v.letter_id
+       WHERE v.letter_id = $1 AND l.vault_id = $2
        ORDER BY v.created_at`,
-      [letterId]
+      [letterId, vaultId]
     );
 
     // Get member count for progress

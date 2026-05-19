@@ -159,12 +159,13 @@ exports.getLetter = async (req, res, next) => {
       `UPDATE letters 
        SET is_unlocked = TRUE, unlocked_at = NOW()
        WHERE id = $1 
+         AND vault_id = $2
          AND (
            (unlock_type = 'date' AND unlock_date <= NOW())
            OR unlock_type = 'event'
          )
          AND is_unlocked = FALSE`,
-      [letterId]
+      [letterId, vaultId]
     );
 
     // Get letter
@@ -244,8 +245,10 @@ exports.updateLetter = async (req, res, next) => {
        SET title = COALESCE($1, title), 
            content = COALESCE($2, content)
        WHERE id = $3
+         AND vault_id = $4
+         AND author_id = $5
        RETURNING *`,
-      [title, content, letterId]
+      [title, content, letterId, vaultId, userId]
     );
 
     res.json({
@@ -264,6 +267,19 @@ exports.unlockLetter = async (req, res, next) => {
   try {
     const { vaultId, letterId } = req.params;
     const userId = req.user.id;
+
+    // Validate membership
+    const memberCheck = await pool.query(
+      'SELECT id FROM vault_members WHERE vault_id = $1 AND user_id = $2',
+      [vaultId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not a member of this vault',
+      });
+    }
 
     // Get letter
     const letterResult = await pool.query(
@@ -307,9 +323,9 @@ exports.unlockLetter = async (req, res, next) => {
     const result = await pool.query(
       `UPDATE letters 
        SET is_unlocked = TRUE, unlocked_at = NOW()
-       WHERE id = $1
+       WHERE id = $1 AND vault_id = $2
        RETURNING *`,
-      [letterId]
+      [letterId, vaultId]
     );
 
     res.json({
@@ -367,8 +383,8 @@ exports.deleteLetter = async (req, res, next) => {
 
     // Delete the letter
     await pool.query(
-      'DELETE FROM letters WHERE id = $1',
-      [letterId]
+      'DELETE FROM letters WHERE id = $1 AND vault_id = $2 AND author_id = $3',
+      [letterId, vaultId, userId]
     );
 
     res.json({
