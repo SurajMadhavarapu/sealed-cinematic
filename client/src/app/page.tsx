@@ -351,29 +351,6 @@ const pressLogos = [
   { name: 'Product Hunt', logo: 'PH' },
 ];
 
-function PressSection() {
-  return (
-    <section className="py-16 px-6 border-y border-white/5">
-      <div className="max-w-5xl mx-auto">
-        <p className="text-center text-white/30 text-sm uppercase tracking-widest mb-8">As Featured In</p>
-        <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
-          {pressLogos.map((press, i) => (
-            <motion.div
-              key={press.name}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="text-white/20 hover:text-white/40 transition-colors"
-            >
-              <div className="text-2xl md:text-3xl font-bold tracking-tight">{press.name}</div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // FAQ Section
 const faqs = [
@@ -1247,7 +1224,6 @@ export default function LandingPage() {
   return (
     <main className="relative">
       <HeroSection />
-      <PressSection />
       <FeaturesSection />
       <AppPreviewSection />
       <HowItWorksSection />
