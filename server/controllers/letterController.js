@@ -5,7 +5,7 @@ const pool = require('../config/db');
 exports.createLetter = async (req, res, next) => {
   try {
     const { vaultId } = req.params;
-    const { title, content, unlockType, unlockDate, unlockEvent } = req.body;
+    const { title, content, unlockType, unlockDate } = req.body;
     const userId = req.user.id;
 
     // Validate membership
@@ -30,11 +30,11 @@ exports.createLetter = async (req, res, next) => {
     }
 
     // Validate unlock type
-    const validUnlockTypes = ['date', 'event', 'consensus'];
+    const validUnlockTypes = ['date', 'consensus'];
     if (!validUnlockTypes.includes(unlockType)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid unlock type. Must be: date, event, or consensus',
+        message: 'Invalid unlock type. Must be: date or consensus',
       });
     }
 
@@ -46,10 +46,27 @@ exports.createLetter = async (req, res, next) => {
       });
     }
 
-    if (unlockType === 'event' && !unlockEvent) {
+    if (unlockType === 'date') {
+      const parsedUnlockDate = new Date(unlockDate);
+      if (Number.isNaN(parsedUnlockDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Unlock date is invalid',
+        });
+      }
+
+      if (parsedUnlockDate <= new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Unlock date must be in the future',
+        });
+      }
+    }
+
+    if (unlockType === 'consensus' && unlockDate) {
       return res.status(400).json({
         success: false,
-        message: 'Unlock event description is required',
+        message: 'Consensus letters cannot include an unlock date',
       });
     }
 
@@ -62,17 +79,17 @@ exports.createLetter = async (req, res, next) => {
         vaultId,
         userId,
         title,
-        content, // In production, encrypt this
+        content, // Prototype only: client-side encryption is still pending.
         unlockType,
         unlockType === 'date' ? new Date(unlockDate) : null,
-        unlockType === 'event' ? unlockEvent : null,
+        null,
       ]
     );
 
     res.status(201).json({
       success: true,
       message: 'Letter sealed successfully',
-      data: { letter: result.rows[0] },
+      data: { letter: { ...result.rows[0], content: null } },
     });
   } catch (error) {
     next(error);
@@ -99,14 +116,13 @@ exports.getLetters = async (req, res, next) => {
       });
     }
 
-    // Check for auto-unlock (date-based letters and event-based letters)
+    // Date letters become eligible only after server time passes.
     await pool.query(
       `UPDATE letters 
        SET is_unlocked = TRUE, unlocked_at = NOW()
        WHERE vault_id = $1 
          AND (
-           (unlock_type = 'date' AND unlock_date <= NOW())
-           OR unlock_type = 'event'
+           unlock_type = 'date' AND unlock_date <= NOW()
          )
          AND is_unlocked = FALSE`,
       [vaultId]
@@ -154,15 +170,14 @@ exports.getLetter = async (req, res, next) => {
       });
     }
 
-    // Auto-unlock if date passed OR event-based (events auto-unlock)
+    // Auto-unlock date letters only after server time passes.
     await pool.query(
       `UPDATE letters 
        SET is_unlocked = TRUE, unlocked_at = NOW()
        WHERE id = $1 
          AND vault_id = $2
          AND (
-           (unlock_type = 'date' AND unlock_date <= NOW())
-           OR unlock_type = 'event'
+           unlock_type = 'date' AND unlock_date <= NOW()
          )
          AND is_unlocked = FALSE`,
       [letterId, vaultId]
@@ -208,6 +223,20 @@ exports.updateLetter = async (req, res, next) => {
     const { title, content } = req.body;
     const userId = req.user.id;
 
+    const memberCheck = await pool.query(
+      'SELECT id FROM vault_members WHERE vault_id = $1 AND user_id = $2',
+      [vaultId, userId]
+    );
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: 'You are not a member of this vault' });
+    }
+
+    if ((title === undefined && content === undefined) ||
+        (title !== undefined && (typeof title !== 'string' || !title.trim() || title.length > 255)) ||
+        (content !== undefined && (typeof content !== 'string' || !content.trim()))) {
+      return res.status(400).json({ success: false, message: 'Provide a non-empty title (up to 255 characters) or content' });
+    }
+
     // Get existing letter
     const letterResult = await pool.query(
       'SELECT * FROM letters WHERE id = $1 AND vault_id = $2',
@@ -247,14 +276,21 @@ exports.updateLetter = async (req, res, next) => {
        WHERE id = $3
          AND vault_id = $4
          AND author_id = $5
+         AND is_unlocked = FALSE
+         AND (unlock_type = 'consensus' OR (unlock_type = 'date' AND unlock_date > clock_timestamp()))
+         AND EXISTS (SELECT 1 FROM vault_members WHERE vault_id = $4 AND user_id = $5)
        RETURNING *`,
       [title, content, letterId, vaultId, userId]
     );
 
+    if (result.rows.length === 0) {
+      return res.status(409).json({ success: false, message: 'Letter is no longer editable' });
+    }
+
     res.json({
       success: true,
       message: 'Letter updated',
-      data: { letter: result.rows[0] },
+      data: { letter: { ...result.rows[0], content: null } },
     });
   } catch (error) {
     next(error);
@@ -262,7 +298,7 @@ exports.updateLetter = async (req, res, next) => {
 };
 
 // @route   PATCH /api/vaults/:vaultId/letters/:letterId/unlock
-// @desc    Manually unlock event-based letter
+// @desc    Unlock an eligible date-based letter
 exports.unlockLetter = async (req, res, next) => {
   try {
     const { vaultId, letterId } = req.params;
@@ -303,19 +339,17 @@ exports.unlockLetter = async (req, res, next) => {
       });
     }
 
-    // Only author can manually unlock event-based letters
-    if (letter.unlock_type === 'event' && letter.author_id !== userId) {
+    if (letter.unlock_type !== 'date') {
       return res.status(403).json({
         success: false,
-        message: 'Only the author can unlock event-based letters',
+        message: 'Only date-based letters can be manually unsealed',
       });
     }
 
-    // Consensus letters need voting (handled separately)
-    if (letter.unlock_type === 'consensus') {
+    if (!letter.unlock_date || new Date(letter.unlock_date) > new Date()) {
       return res.status(400).json({
         success: false,
-        message: 'Consensus letters require group voting to unlock',
+        message: 'Letter cannot be unsealed before its unlock date',
       });
     }
 

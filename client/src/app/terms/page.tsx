@@ -56,7 +56,7 @@ export default function TermsOfServicePage() {
             </p>
             <ul className="list-disc list-inside space-y-2 text-white/70 ml-4">
               <li>Create private vaults shared with loved ones</li>
-              <li>Write encrypted letters with various unlock conditions</li>
+              <li>Write test letters with date or consensus unlock conditions; content is not end-to-end encrypted</li>
               <li>Set time-based unlock dates for letters</li>
               <li>Use consensus-based unlocking requiring group agreement</li>
               <li>Receive AI-powered writing prompts for inspiration</li>
@@ -94,7 +94,7 @@ export default function TermsOfServicePage() {
               </p>
               <p>
                 <strong className="text-white">License to Us:</strong> By posting content, you grant us 
-                a limited license to store, encrypt, and deliver your content as necessary to provide 
+                a limited license to store and deliver your content as necessary to provide
                 our service. We do not claim ownership of your content.
               </p>
               <p>

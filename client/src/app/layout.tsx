@@ -3,8 +3,8 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'SEALED - Time-Locked Letters for Loved Ones',
-  description: 'A private, end-to-end encrypted app where couples and families write time-locked letters, confessions, promises, and messages — delivered only when the moment is right.',
-  keywords: ['letters', 'time capsule', 'encrypted', 'couples', 'family', 'messages'],
+  description: 'A prototype for shared, time-locked letters for couples and families. End-to-end encryption is not yet available; use fictional test content only.',
+  keywords: ['letters', 'time capsule', 'couples', 'family', 'messages'],
   icons: {
     icon: '/favicon.svg'
   }

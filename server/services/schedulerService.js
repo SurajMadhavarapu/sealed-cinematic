@@ -28,9 +28,6 @@ const checkAndUnlockLetters = async () => {
 
     if (result.rows.length > 0) {
       console.log(`📬 Auto-unlocked ${result.rows.length} letter(s)`);
-      result.rows.forEach(letter => {
-        console.log(`   - "${letter.title}" (ID: ${letter.id})`);
-      });
     }
 
     return result.rows;

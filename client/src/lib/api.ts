@@ -89,7 +89,7 @@ export const letters = {
   create: (vaultId: string, data: {
     title: string;
     content: string;
-    unlockType: 'date' | 'event' | 'consensus';
+    unlockType: 'date' | 'consensus';
     unlockDate?: string;
     unlockEvent?: string;
   }) =>

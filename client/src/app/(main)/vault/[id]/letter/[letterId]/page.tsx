@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft, Lock, Mail, Clock, CalendarClock, Users,
+  ArrowLeft, Lock, Mail, CalendarClock, Users,
   Loader2, Volume2, VolumeX, ThumbsUp, ThumbsDown, Unlock, Trash2
 } from 'lucide-react';
 import { letters, votes, auth } from '@/lib/api';
@@ -15,7 +15,7 @@ interface Letter {
   id: number;
   title: string;
   content: string | null;
-  unlock_type: 'date' | 'event' | 'consensus';
+  unlock_type: 'date' | 'consensus';
   unlock_date: string | null;
   unlock_event: string | null;
   is_unlocked: boolean;
@@ -409,12 +409,6 @@ function SealedLetterView({
           text: canUnlock ? 'Ready to unseal!' : `Unseals on ${formatDate(letter.unlock_date!)}`,
           canUnlock,
         };
-      case 'event':
-        return {
-          icon: Clock,
-          text: letter.unlock_event,
-          canUnlock: true, // Author can unlock event-based
-        };
       case 'consensus':
         return {
           icon: Users,
@@ -465,13 +459,6 @@ function SealedLetterView({
             </button>
           )}
 
-          {/* Event-based unlock - Auto-unlocks, no button needed */}
-          {letter.unlock_type === 'event' && (
-            <div className="text-center text-white/60 text-sm">
-              <p>This letter will unlock when the event occurs.</p>
-            </div>
-          )}
-
           {/* Voting (optional for locked letters) */}
           {voteData && !letter.is_unlocked && (
             <div className="space-y-6">
@@ -485,7 +472,7 @@ function SealedLetterView({
               </div>
 
               <div className="text-sm text-white/60">
-                {voteData.summary.yes} yes · {voteData.summary.no} no · {voteData.summary.total} votes · majority required: {Math.floor(voteData.summary.required / 2) + 1}
+                {voteData.summary.yes} yes · {voteData.summary.no} no · {voteData.summary.total} votes · all {voteData.summary.required} members required
               </div>
 
               {/* Vote buttons */}

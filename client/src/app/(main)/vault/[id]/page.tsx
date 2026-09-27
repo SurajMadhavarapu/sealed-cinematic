@@ -14,7 +14,7 @@ import { formatDate, formatRelativeTime, getInitials } from '@/lib/utils';
 interface Letter {
   id: number;
   title: string;
-  unlock_type: 'date' | 'event' | 'consensus';
+  unlock_type: 'date' | 'consensus';
   unlock_date: string | null;
   unlock_event: string | null;
   is_unlocked: boolean;
@@ -52,6 +52,7 @@ export default function VaultPage() {
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
+  const [inviteError, setInviteError] = useState('');
 
   useEffect(() => {
     loadVaultData();
@@ -75,12 +76,13 @@ export default function VaultPage() {
   };
 
   const handleGenerateInvite = async () => {
+    setInviteError('');
     try {
       const res = await vaults.generateInvite(vaultId);
       setInviteCode(res.data.inviteCode);
       setShowInviteModal(true);
     } catch (error) {
-      console.error('Failed to generate invite');
+      setInviteError(error instanceof Error ? error.message : 'Failed to generate invite.');
     }
   };
 
@@ -173,6 +175,11 @@ export default function VaultPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {inviteError && (
+              <div className="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200" role="alert">
+                {inviteError}
+              </div>
+            )}
             {/* Members */}
             <div className="card p-6">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -262,7 +269,6 @@ function LetterCard({ letter, vaultId, index }: { letter: Letter; vaultId: strin
   const getUnlockIcon = () => {
     switch (letter.unlock_type) {
       case 'date': return <CalendarClock className="w-4 h-4" />;
-      case 'event': return <Clock className="w-4 h-4" />;
       case 'consensus': return <Vote className="w-4 h-4" />;
     }
   };
@@ -274,8 +280,6 @@ function LetterCard({ letter, vaultId, index }: { letter: Letter; vaultId: strin
     switch (letter.unlock_type) {
       case 'date':
         return formatRelativeTime(letter.unlock_date!);
-      case 'event':
-        return letter.unlock_event;
       case 'consensus':
         return 'Waiting for consensus';
     }

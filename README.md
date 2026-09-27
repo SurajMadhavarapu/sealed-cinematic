@@ -2,14 +2,14 @@
 
 > *Some things are too important to say right now. Say them for later.*
 
-SEALED is a private, end-to-end encrypted web app where couples and families write time-locked letters, confessions, promises, and messages — delivered only when the moment is right.
+SEALED is a prototype web app where couples and families write time-locked letters, confessions, promises, and messages. Letter content is currently stored as plaintext on the server; end-to-end encryption is not implemented. Use fictional test content only.
 
 ---
 
 ## ✨ What Makes SEALED Different
 
-- **Zero-knowledge encryption** — Even we can't read your letters
-- **Time-locked delivery** — Letters unlock on a date, event, or milestone you choose
+- **Private prototype** — Authenticated vault access for controlled testing
+- **Time-locked delivery** — Letters unlock on a future date or unanimous group approval
 - **Equal ownership** — No single admin. Every major action requires group consensus
 - **No ads. No data selling. Ever.**
 
@@ -35,7 +35,7 @@ SEALED features a **cinematic, dramatic** visual experience with:
 | Backend | Node.js + Express |
 | Database | PostgreSQL |
 | Auth | JWT + bcrypt |
-| Encryption | AES-256 |
+| Encryption | Planned client-side encryption; prototype stores plaintext |
 
 ---
 

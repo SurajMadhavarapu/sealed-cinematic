@@ -1,5 +1,10 @@
 const pool = require('../config/db');
 const crypto = require('crypto');
+const transaction = require('../utils/transaction');
+
+// Invite credentials are returned only by the owner-only generation endpoint.
+const publicVault = ({ invite_code, invite_expires_at, ...vault }) => vault;
+const failure = (status, message) => ({ status, body: { success: false, message } });
 
 // Generate random invite code
 const generateInviteCode = () => {
@@ -40,7 +45,7 @@ exports.createVault = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Vault created successfully',
-      data: { vault },
+      data: { vault: publicVault(vault) },
     });
   } catch (error) {
     next(error);
@@ -66,7 +71,7 @@ exports.getMyVaults = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: { vaults: result.rows },
+      data: { vaults: result.rows.map(publicVault) },
     });
   } catch (error) {
     next(error);
@@ -119,7 +124,7 @@ exports.getVault = async (req, res, next) => {
     res.json({
       success: true,
       data: {
-        vault: vaultResult.rows[0],
+        vault: publicVault(vaultResult.rows[0]),
         members: membersResult.rows,
         userRole: memberCheck.rows[0].role,
       },
@@ -185,62 +190,35 @@ exports.joinVault = async (req, res, next) => {
   try {
     const { inviteCode } = req.body;
     const userId = req.user.id;
-
-    if (!inviteCode) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invite code is required',
-      });
+    if (typeof inviteCode !== 'string' || !/^[a-f0-9]{12}$/i.test(inviteCode.trim())) {
+      return res.status(400).json({ success: false, message: 'Invalid invite code' });
     }
-
-    // Find vault by invite code
-    const vaultResult = await pool.query(
-      `SELECT * FROM vaults 
-       WHERE invite_code = $1 AND invite_expires_at > NOW()`,
-      [inviteCode.toUpperCase()]
-    );
-
-    if (vaultResult.rows.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired invite code',
-      });
-    }
-
-    const vault = vaultResult.rows[0];
-
-    // Check if already a member
-    const existingMember = await pool.query(
-      'SELECT id FROM vault_members WHERE vault_id = $1 AND user_id = $2',
-      [vault.id, userId]
-    );
-
-    if (existingMember.rows.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'You are already a member of this vault',
-      });
-    }
-
-    // Add as member
-    await pool.query(
-      `INSERT INTO vault_members (vault_id, user_id, role)
-       VALUES ($1, $2, 'member')`,
-      [vault.id, userId]
-    );
-
-    // Clear invite code after use (optional: one-time use)
-    await pool.query(
-      `UPDATE vaults SET invite_code = NULL, invite_expires_at = NULL WHERE id = $1`,
-      [vault.id]
-    );
-
-    res.json({
-      success: true,
-      message: `You have joined "${vault.name}"`,
-      data: { vault },
+    const result = await transaction(pool, async (client) => {
+      // Lock before checking expiry: waiting for another request can take time.
+      const found = await client.query(
+        'SELECT * FROM vaults WHERE invite_code = $1 FOR UPDATE',
+        [inviteCode.trim().toUpperCase()]
+      );
+      if (!found.rows.length) return failure(400, 'Invalid or expired invite code');
+      const vault = found.rows[0];
+      const valid = await client.query(
+        'SELECT id FROM vaults WHERE id = $1 AND invite_expires_at > clock_timestamp()', [vault.id]
+      );
+      if (!valid.rows.length) return failure(400, 'Invalid or expired invite code');
+      const existing = await client.query(
+        'SELECT id FROM vault_members WHERE vault_id = $1 AND user_id = $2', [vault.id, userId]
+      );
+      if (existing.rows.length) return failure(400, 'You are already a member of this vault');
+      await client.query(
+        "INSERT INTO vault_members (vault_id, user_id, role) VALUES ($1, $2, 'member')", [vault.id, userId]
+      );
+      await client.query(
+        'UPDATE vaults SET invite_code = NULL, invite_expires_at = NULL WHERE id = $1', [vault.id]
+      );
+      return { status: 200, body: {
+        success: true, message: 'You have joined the vault', data: { vault: publicVault(vault) },
+      } };
     });
-  } catch (error) {
-    next(error);
-  }
+    res.status(result.status).json(result.body);
+  } catch (error) { next(error); }
 };

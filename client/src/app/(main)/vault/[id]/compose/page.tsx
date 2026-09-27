@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft, Send, Lock, CalendarClock, Clock, Users,
+  ArrowLeft, Lock, CalendarClock, Users,
   Loader2, Sparkles, Lightbulb, RefreshCw
 } from 'lucide-react';
 import { letters, ai } from '@/lib/api';
@@ -21,8 +21,8 @@ export default function ComposePage() {
   const [content, setContent] = useState('');
   const [unlockType, setUnlockType] = useState<UnlockType>('automatic');
   const [unlockDate, setUnlockDate] = useState('');
-  const [eventName, setEventName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [showPrompts, setShowPrompts] = useState(false);
   const [prompts, setPrompts] = useState<string[]>([]);
   const [loadingPrompts, setLoadingPrompts] = useState(false);
@@ -51,33 +51,28 @@ export default function ComposePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     // Validate date is set for automatic unlock
     if (unlockType === 'automatic' && !unlockDate) {
-      alert('Please select an unlock date');
+      setError('Please select an unlock date.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const payload: any = {
+      const payload = {
         title,
         content,
-        unlockType: 'date',
-        unlockDate,
+        unlockType: unlockType === 'automatic' ? 'date' as const : 'consensus' as const,
+        ...(unlockType === 'automatic' ? { unlockDate } : {}),
       };
-
-      // Store event name in unlock_event field if provided
-      if (eventName.trim()) {
-        payload.unlockEvent = eventName;
-      }
 
       await letters.create(vaultId, payload);
       router.push(`/vault/${vaultId}`);
     } catch (error) {
-      console.error('Failed to create letter:', error);
-      alert('Failed to seal letter. Please try again.');
+      setError(error instanceof Error ? error.message : 'Failed to seal letter. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -111,6 +106,16 @@ export default function ComposePage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-12">
+        <div className="mb-8 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          Prototype mode: do not use real secrets or sensitive personal information yet. Letter content is not end-to-end encrypted.
+        </div>
+
+        {error && (
+          <div className="mb-8 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200" role="alert">
+            {error}
+          </div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -257,19 +262,9 @@ export default function ComposePage() {
                     />
                   </div>
 
-                  <div>
-                    <label className="input-label">Event Name <span className="text-white/40">(optional)</span></label>
-                    <input
-                      type="text"
-                      value={eventName}
-                      onChange={e => setEventName(e.target.value)}
-                      placeholder="e.g., Our wedding day, Birthday, etc."
-                      className="input"
-                    />
-                    <p className="text-xs text-white/40 mt-2">
-                      Add a meaningful name to associate with this date
-                    </p>
-                  </div>
+                  <p className="text-xs text-white/40 mt-2">
+                    Prototype version supports exact dates only. Event-based unlocking is not available yet.
+                  </p>
                 </motion.div>
               )}
 

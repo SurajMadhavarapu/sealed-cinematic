@@ -127,14 +127,14 @@ function HeroSection() {
 const features = [
   {
     icon: Shield,
-    title: 'Zero-Knowledge Encryption',
-    description: 'Your letters are encrypted before they leave your device. Not even we can read them.',
+    title: 'Private Prototype',
+    description: 'Built for private-feeling shared letters while client-side encryption is being developed.',
     color: 'pink',
   },
   {
     icon: Clock,
     title: 'Time-Locked Delivery',
-    description: 'Set a date, an event, or let your group decide when letters are unsealed.',
+    description: 'Set a date or let every vault member agree before letters are unsealed.',
     color: 'coral',
   },
   {
@@ -224,7 +224,7 @@ const steps = [
   {
     number: '03',
     title: 'Seal It',
-    description: 'Choose when it unlocks: a specific date, a life event, or when everyone agrees.',
+    description: 'Choose a future date or wait until everyone in the vault agrees.',
   },
   {
     number: '04',
@@ -356,7 +356,7 @@ const pressLogos = [
 const faqs = [
   {
     q: 'How secure is SEALED?',
-    a: 'Your letters are encrypted with AES-256 encryption before leaving your device. We use zero-knowledge architecture — meaning even we cannot read your letters. Only you and your intended recipients have access.',
+    a: 'This prototype uses authenticated access controls, but letter content is not yet end-to-end encrypted. Do not store sensitive information until client-side encryption is released.',
   },
   {
     q: 'What happens if SEALED shuts down?',
@@ -608,10 +608,10 @@ function AppPreviewSection() {
 // Security Section
 function SecuritySection() {
   const features = [
-    { icon: '🔐', title: 'AES-256 Encryption', desc: 'Military-grade encryption protects every letter' },
-    { icon: '👁️‍🗨️', title: 'Zero-Knowledge', desc: 'We cannot read your letters, ever' },
-    { icon: '🏦', title: 'SOC 2 Type II', desc: 'Audited security practices & compliance' },
-    { icon: '🌍', title: 'GDPR Compliant', desc: 'Your data rights protected worldwide' },
+    { icon: '🔐', title: 'Prototype Security', desc: 'Authenticated access controls protect the test experience' },
+    { icon: '🧪', title: 'Testing Stage', desc: 'Do not store sensitive information yet' },
+    { icon: '⏳', title: 'Time-Locked', desc: 'Letters unlock only after their configured rule is met' },
+    { icon: '👥', title: 'Shared Vaults', desc: 'Invite people you trust to write together' },
   ];
 
   return (
@@ -671,16 +671,16 @@ function SecuritySection() {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(253, 41, 123, 0.1)' }}>
                 <span className="text-2xl">🔒</span>
               </div>
-              <p className="font-medium mb-1">Encrypted</p>
-              <p className="text-xs text-white/40">Before it leaves</p>
+              <p className="font-medium mb-1">Sealed</p>
+              <p className="text-xs text-white/40">Access controlled</p>
             </div>
             <ArrowRight className="w-6 h-6 text-white/20 hidden md:block" />
             <div className="flex-1">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                 <span className="text-2xl">☁️</span>
               </div>
-              <p className="font-medium mb-1">Stored Safely</p>
-              <p className="text-xs text-white/40">Unreadable to us</p>
+              <p className="font-medium mb-1">Stored on Server</p>
+              <p className="text-xs text-white/40">Not end-to-end encrypted</p>
             </div>
             <ArrowRight className="w-6 h-6 text-white/20 hidden md:block" />
             <div className="flex-1">
@@ -688,7 +688,7 @@ function SecuritySection() {
                 <span className="text-2xl">💌</span>
               </div>
               <p className="font-medium mb-1">Delivered</p>
-              <p className="text-xs text-white/40">Only you can read</p>
+              <p className="text-xs text-white/40">Vault members can read after unlock</p>
             </div>
           </div>
         </motion.div>
@@ -701,7 +701,7 @@ function SecuritySection() {
 function ComparisonSection() {
   const features = [
     { name: 'Time-locked delivery', sealed: true, email: false, notes: false },
-    { name: 'End-to-end encryption', sealed: true, email: false, notes: true },
+    { name: 'End-to-end encryption', sealed: false, email: false, notes: true },
     { name: 'Consensus unlocking', sealed: true, email: false, notes: false },
     { name: 'Guaranteed delivery', sealed: true, email: false, notes: false },
     { name: 'Beautiful experience', sealed: true, email: false, notes: false },
@@ -788,7 +788,7 @@ function PricingSection() {
       features: [
         'Up to 3 vaults',
         '50 letters total',
-        'Basic encryption',
+        'Vault access controls',
         'Email support',
       ],
       cta: 'Get Started',
@@ -804,7 +804,7 @@ function PricingSection() {
         'Unlimited vaults',
         'Unlimited letters',
         'Priority delivery',
-        'Advanced encryption',
+        'Vault access controls',
         'Family sharing (up to 10)',
         'Priority support',
       ],
@@ -1122,15 +1122,15 @@ function AwardsSection() {
         >
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5" />
-            <span className="text-sm">256-bit Encryption</span>
+            <span className="text-sm">Prototype access controls</span>
           </div>
           <div className="flex items-center gap-2">
             <Lock className="w-5 h-5" />
-            <span className="text-sm">Zero-Knowledge</span>
+            <span className="text-sm">Date-locked letters</span>
           </div>
           <div className="flex items-center gap-2">
             <Award className="w-5 h-5" />
-            <span className="text-sm">SOC 2 Certified</span>
+            <span className="text-sm">Shared vaults</span>
           </div>
         </motion.div>
       </div>

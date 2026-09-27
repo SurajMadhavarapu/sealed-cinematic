@@ -39,12 +39,12 @@ CREATE TABLE IF NOT EXISTS letters (
     vault_id INTEGER REFERENCES vaults(id) ON DELETE CASCADE,
     author_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL, -- Encrypted content
+    content TEXT NOT NULL, -- Plaintext prototype content; end-to-end encryption is not implemented
     
     -- Unlock conditions
-    unlock_type VARCHAR(20) NOT NULL, -- 'date', 'event', 'consensus'
+    unlock_type VARCHAR(20) NOT NULL, -- 'date', 'consensus'
     unlock_date TIMESTAMP, -- For date-based unlock
-    unlock_event VARCHAR(255), -- For event-based unlock description
+    unlock_event VARCHAR(255), -- Reserved for a future event-unlock migration
     is_unlocked BOOLEAN DEFAULT FALSE,
     unlocked_at TIMESTAMP,
     

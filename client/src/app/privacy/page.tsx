@@ -87,13 +87,13 @@ export default function PrivacyPolicyPage() {
             </h2>
             <div className="space-y-4 text-white/70">
               <p>
-                <strong className="text-white">Encryption:</strong> All letter content is encrypted using 
-                AES-256 encryption before being stored in our database. This means even we cannot read 
-                your letters in their encrypted state.
+                <strong className="text-white">Prototype limitation:</strong> Letter content is currently stored
+                by the server for this testing version. Do not submit sensitive information. Client-side
+                end-to-end encryption is planned before production launch.
               </p>
               <p>
-                <strong className="text-white">Secure Transmission:</strong> All data transmitted between 
-                your device and our servers is protected using HTTPS/TLS encryption.
+                <strong className="text-white">Transmission:</strong> HTTPS/TLS protects data in transit
+                when the app is deployed with HTTPS. Local HTTP development connections are not encrypted.
               </p>
               <p>
                 <strong className="text-white">Password Security:</strong> Your password is hashed using 
@@ -101,7 +101,8 @@ export default function PrivacyPolicyPage() {
               </p>
               <p>
                 <strong className="text-white">Access Controls:</strong> Only you and the members of your 
-                vaults can access your letters, and only when unlock conditions are met.
+                vaults can access letter content through the app when unlock conditions are met.
+                Server and database operators can currently read stored content, including locked letters.
               </p>
             </div>
           </section>
@@ -127,7 +128,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-2xl font-serif font-bold mb-4 text-amber-400">What We Don&apos;t Do</h2>
             <ul className="list-disc list-inside space-y-2 text-white/70 ml-4">
               <li>We do NOT sell your personal information to third parties</li>
-              <li>We do NOT read your encrypted letters</li>
+              <li>This prototype does not provide end-to-end encryption; do not store real secrets</li>
               <li>We do NOT share your data with advertisers</li>
               <li>We do NOT use your content for AI training</li>
               <li>We do NOT send marketing emails without your consent</li>
