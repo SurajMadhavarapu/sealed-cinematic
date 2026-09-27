@@ -45,4 +45,12 @@ Additional disclosure check: the AI endpoint sends supplied mood/context to Groq
 - Test PostgreSQL ran locally using temporary binaries outside the repository. No application database was accessed, no application dependency was added, and no deployment was performed.
 - See server/test/README.md for repeatable test instructions.
 
-Next bounded step: design encryption and account recovery before implementation. Server/database operators can still read stored letters.
+## Step three: encryption foundation
+
+- The owner chose a user-saved recovery code; SEALED will not hold a master decryption key.
+- `ENCRYPTION-DESIGN.md` records the threat model, key/recovery flow, membership limitations, migration plan, and implementation prerequisites.
+- Browser-side AES-GCM envelope and recovery-secret primitives are implemented separately from the live application. Recipient key distribution, account-reset flows, and migration are not implemented.
+- Validation: 8 client cryptography tests passed using Node Web Crypto; the production Next.js build, including type checking, passed. Browser compatibility and full recovery journeys remain untested.
+- No existing letters or authentication behavior were changed. Server/database operators can still read stored letters.
+
+Next bounded step: encryption identity setup and recovery confirmation, after finalizing recipient-key verification and historical sharing.
