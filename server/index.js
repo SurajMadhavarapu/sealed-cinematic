@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const validateEnv = require('./config/validateEnv');
+validateEnv();
+const pool = require('./config/db');
 
 // Import scheduler
 const { startScheduler } = require('./services/schedulerService');
@@ -25,7 +27,6 @@ const {
 
 const app = express();
 app.set('trust proxy', 1);
-validateEnv();
 
 // Security middleware
 app.use(securityHeaders);
@@ -62,7 +63,17 @@ app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const start = async () => {
+  // Do not advertise a healthy deployment while TLS or database authentication fails.
+  try {
+    await pool.query('SELECT 1');
+  } catch (error) {
+    console.error('Database startup check failed. Check DATABASE_URL and DATABASE_SSL_CA.', error.code || 'DATABASE_CONNECTION_FAILED');
+    await pool.end();
+    process.exitCode = 1;
+    return;
+  }
+  app.listen(PORT, () => {
   console.log(`
 ╔═══════════════════════════════════════════╗
 ║      🔐 SEALED API Server                 ║
@@ -73,4 +84,6 @@ app.listen(PORT, () => {
 
   // Start the letter unlock scheduler
   startScheduler();
-});
+  });
+};
+start();

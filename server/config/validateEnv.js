@@ -20,10 +20,8 @@ const validateEnv = () => {
       process.env.ENFORCE_HTTPS !== 'false',
       'ENFORCE_HTTPS cannot be disabled in production'
     );
-    assert(
-      process.env.DB_PRIVATE_NETWORK_ONLY === 'true',
-      'Set DB_PRIVATE_NETWORK_ONLY=true and restrict database network access to private networks only'
-    );
+    // External managed databases are supported through verified TLS in databaseOptions.
+    // A boolean environment flag cannot establish or verify private networking.
   }
 };
 
